@@ -1,34 +1,41 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google"; // Renomeado para evitar conflito
 import "./globals.css";
-import { WalletContextProvider } from "./components/WalletContextProvider"; // Import the provider
+// Importação direta dos estilos da UI da carteira (alternativa)
+// Se os estilos não aplicarem automaticamente, descomente a linha abaixo
+// import '@solana/wallet-adapter-react-ui/styles.css';
+import { WalletContextProvider } from "./components/WalletContextProvider"; // Importa o provider
 
-const geistSans = Geist({
+// Configuração das fontes Geist
+const geistSansFont = Geist({ // Renomeado
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
+const geistMonoFont = Geist_Mono({ // Renomeado
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
+// Metadados da aplicação
 export const metadata: Metadata = {
-  title: "ProphetFi", // Updated title
-  description: "The Future of DeFi Intelligence", // Updated description
+  title: "ProphetFi", // Título atualizado
+  description: "The Future of DeFi Intelligence", // Descrição atualizada
 };
 
+// Layout Raiz da Aplicação
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // Removido espaço em branco extra antes de <body...>
+    <html lang="pt">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSansFont.variable} ${geistMonoFont.variable} antialiased`} // Usa os nomes renomeados das fontes
       >
-        {/* Wrap the children with the Wallet Context Provider */}
+        {/* Envolve os filhos com o Provedor de Contexto da Carteira */}
         <WalletContextProvider>
           {children}
         </WalletContextProvider>
@@ -36,3 +43,4 @@ export default function RootLayout({
     </html>
   );
 }
+
