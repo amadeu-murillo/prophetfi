@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Necessário para hooks do React (useMemo) e contexto
 
 import React, { FC, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -7,40 +7,44 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
-// Remove the require statement for CSS from here
+// Importação de CSS geralmente não é feita aqui no App Router,
+// mas sim no layout.tsx ou globals.css. Deixe comentado ou remova.
 // require('@solana/wallet-adapter-react-ui/styles.css');
+// Ou se os estilos não estiverem aplicando:
+// import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface WalletContextProviderProps {
     children: React.ReactNode;
 }
 
 export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children }) => {
-    // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
+    // A rede pode ser 'devnet', 'testnet', ou 'mainnet-beta'
     const network = WalletAdapterNetwork.Devnet;
 
-    // You can also provide a custom RPC endpoint
+    // Endpoint RPC da rede Solana. useMemo evita recálculos desnecessários.
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-    // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
-    // Only the wallets you configure here will be compiled into your application, and only the dependencies
-    // of wallets that your users connect to will be loaded
+    // Configuração das carteiras suportadas.
+    // Apenas as carteiras configuradas aqui serão incluídas no bundle final.
     const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter({ network }),
-            // Add other wallets here if needed
+            // Adicione outras carteiras aqui se necessário
         ],
-        [network]
+        [network] // Recalcula apenas se a rede mudar
     );
 
     return (
+        // Provedor para a conexão com a rede Solana
         <ConnectionProvider endpoint={endpoint}>
+            {/* Provedor para o estado da carteira (carteiras disponíveis, conexão) */}
             <WalletProvider wallets={wallets} autoConnect>
+                {/* Provedor para a UI Modal de seleção de carteira */}
                 <WalletModalProvider>
-                    {children}
+                    {children} {/* Renderiza os componentes filhos dentro dos provedores */}
                 </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
     );
 };
-
