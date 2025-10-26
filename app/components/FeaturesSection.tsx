@@ -14,15 +14,19 @@ const FeaturesSection: React.FC = () => {
     ];
 
     return (
-      <div id="features" className="bg-gray-900 py-24 sm:py-32">
+      // Fundo em slate-900
+      <div id="features" className="bg-slate-900 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           {/* Cabeçalho da Seção */}
           <div className="mx-auto max-w-2xl lg:text-center">
-            <p className="text-base font-semibold leading-7 text-indigo-400">Porquê ProphetFi?</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {/* Subtítulo em indigo-500 */}
+            <p className="text-base font-semibold leading-7 text-indigo-500">Porquê ProphetFi?</p>
+            {/* Título em slate-100 */}
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">
               Uma Vantagem Injusta em DeFi
             </h2>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
+            {/* Parágrafo em slate-300 */}
+            <p className="mt-6 text-lg leading-8 text-slate-300">
               Navegue pelas finanças descentralizadas com confiança usando nossa plataforma de inteligência crítica.
             </p>
           </div>
@@ -30,12 +34,15 @@ const FeaturesSection: React.FC = () => {
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
               {features.map((feature) => (
-                <div key={feature.name} className="flex flex-col p-6 rounded-lg bg-gray-800/50 shadow-lg transition-all hover:scale-105 hover:bg-gray-800">
-                  <dt className="flex items-center gap-x-3 text-lg font-semibold leading-7 text-white">
-                    <feature.icon className="h-6 w-6 flex-none text-indigo-400" aria-hidden="true" />
+                // Card com fundo slate-800/60 e hover slate-800
+                <div key={feature.name} className="flex flex-col p-6 rounded-lg bg-slate-800/60 shadow-lg transition-all hover:scale-105 hover:bg-slate-800">
+                  <dt className="flex items-center gap-x-3 text-lg font-semibold leading-7 text-slate-100">
+                    {/* Ícone em indigo-500 */}
+                    <feature.icon className="h-6 w-6 flex-none text-indigo-500" aria-hidden="true" />
                     {feature.name}
                   </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-300">
+                  {/* Descrição em slate-400 */}
+                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-400">
                     <p className="flex-auto">{feature.description}</p>
                   </dd>
                 </div>

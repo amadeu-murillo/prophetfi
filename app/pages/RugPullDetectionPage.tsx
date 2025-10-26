@@ -29,19 +29,16 @@ const RugPullDetectionPage: React.FC = () => {
 
     // Função para lidar com a verificação do endereço
     const handleCheckAddress = useCallback(async () => {
-        // Verifica se a carteira está conectada
         if (!publicKey) {
             setError("Por favor, conecte sua carteira primeiro.");
             return;
         }
-        // Verifica se um endereço foi inserido
         const trimmedAddress = addressToCheck.trim();
         if (!trimmedAddress) {
             setError("Por favor, insira um endereço Solana para verificar.");
             return;
         }
 
-        // Validação básica do formato do endereço Solana
         try {
             new PublicKey(trimmedAddress);
         } catch (err) {
@@ -49,52 +46,44 @@ const RugPullDetectionPage: React.FC = () => {
             return;
         }
 
-        // Reseta estados e inicia o carregamento
         setIsLoading(true);
         setError(null);
         setResult(null);
-        setFeePaid(false); // Reseta o status da taxa para a nova verificação
+        setFeePaid(false);
 
         try {
-            // --- Simulação da Transação de Taxa ---
             console.log("Simulando pagamento da taxa...");
             const transaction = new Transaction().add(
                 SystemProgram.transfer({
                     fromPubkey: publicKey,
-                    toPubkey: new PublicKey(feeReceiverAddress), // Usa o endereço real do receptor
-                    lamports: feeAmountSOL * LAMPORTS_PER_SOL, // Converte SOL para Lamports
+                    toPubkey: new PublicKey(feeReceiverAddress),
+                    lamports: feeAmountSOL * LAMPORTS_PER_SOL,
                 })
             );
 
-            // Obtém o blockhash mais recente para a transação
             const {
                 context: { slot: minContextSlot },
                 value: { blockhash, lastValidBlockHeight }
             } = await connection.getLatestBlockhashAndContext();
 
-            // Envia a transação usando o adaptador da carteira
             const signature = await sendTransaction(transaction, connection, { minContextSlot });
 
-            // Confirma a transação na rede
             await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature });
 
             console.log(`Transação de pagamento da taxa bem-sucedida com assinatura: ${signature}`);
-            setFeePaid(true); // Marca a taxa como paga
+            setFeePaid(true);
 
-            // --- Simulação da Chamada à API de Verificação de Rug Pull ---
             console.log(`Verificando endereço: ${trimmedAddress}`);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simula atraso de rede
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simula atraso
 
             // --- Resultado Mock (Simulado) ---
-            // Substitua esta parte pela sua chamada de API real e tratamento do resultado
-            const mockRisk = Math.random(); // Simula um fator de risco
+            const mockRisk = Math.random();
             const mockResult: RugPullResult = {
                 riskScore: Math.floor(mockRisk * 100),
-                isRugPull: mockRisk > 0.7, // Limite de exemplo para considerar rug pull
+                isRugPull: mockRisk > 0.7,
                 warnings: [],
             };
 
-            // Adiciona avisos com base no risco simulado
             if (mockRisk > 0.8) {
                 mockResult.warnings.push("Alta concentração de tokens nas carteiras principais.");
                 mockResult.warnings.push("Pool de liquidez desbloqueada ou controlada pelo deployer.");
@@ -106,11 +95,10 @@ const RugPullDetectionPage: React.FC = () => {
                  mockResult.warnings.push("Liquidez parece bloqueada.");
             }
 
-            setResult(mockResult); // Define o resultado no estado
+            setResult(mockResult);
 
         } catch (err: any) {
             console.error("Falha na verificação de rug pull:", err);
-            // Trata erros específicos da transação ou outros erros
              if (err.message.includes('User rejected the request')) {
                 setError("Transação rejeitada. Por favor, aprove o pagamento da taxa para prosseguir.");
             } else if (err.message.includes('blockhash') || err.message.includes('timeout')) {
@@ -119,55 +107,63 @@ const RugPullDetectionPage: React.FC = () => {
              else {
                 setError(`Ocorreu um erro: ${err.message || 'Erro desconhecido'}`);
             }
-            setFeePaid(false); // Reseta o status da taxa em caso de erro
+            setFeePaid(false);
         } finally {
-            setIsLoading(false); // Finaliza o carregamento
+            setIsLoading(false);
         }
-    }, [publicKey, addressToCheck, connection, sendTransaction, feeReceiverAddress]); // Inclui feeReceiverAddress nas dependências
+    }, [publicKey, addressToCheck, connection, sendTransaction, feeReceiverAddress]);
 
-    // Função para obter a cor do texto com base na pontuação de risco
+    // Função para obter a cor do texto com base na pontuação de risco (usando cores mais adequadas)
     const getRiskColor = (score: number): string => {
         if (score > 70) return 'text-red-500'; // Risco alto
-        if (score > 40) return 'text-yellow-500'; // Risco médio
-        return 'text-green-500'; // Risco baixo
+        if (score > 40) return 'text-amber-500'; // Risco médio (âmbar)
+        return 'text-emerald-500'; // Risco baixo (esmeralda)
     };
 
     return (
-      <div className="bg-gray-900 py-24 sm:py-32">
+      // Fundo slate-900
+      <div className="bg-slate-900 py-24 sm:py-32">
         <div className="mx-auto max-w-4xl px-6 lg:px-8">
           {/* Cabeçalho da Página */}
           <div className="text-center mb-16">
-            <p className="text-base font-semibold leading-7 text-indigo-400">Segurança com IA</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {/* Subtítulo indigo-500 */}
+            <p className="text-base font-semibold leading-7 text-indigo-500">Segurança com IA</p>
+            {/* Título slate-100 */}
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">
               Detector de Rug Pull Solana
             </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
+            {/* Parágrafo slate-300 */}
+            <p className="mt-6 text-lg leading-8 text-slate-300">
               Conecte sua carteira, insira um endereço de token ou contrato Solana e pague uma pequena taxa ({feeAmountSOL} SOL) para obter uma avaliação de risco com IA.
             </p>
           </div>
 
           {/* Área de Interação */}
-          <div className="bg-gray-800/50 p-8 rounded-lg shadow-xl max-w-2xl mx-auto">
+          {/* Fundo slate-800/60 */}
+          <div className="bg-slate-800/60 p-8 rounded-lg shadow-xl max-w-2xl mx-auto">
             {/* Status da Conexão da Carteira */}
              <div className="mb-6 flex flex-col items-center">
                 {!publicKey ? (
                      <>
-                        <p className="text-center text-gray-400 mb-4">Conecte sua carteira para começar.</p>
-                        {/* Botão de conexão da carteira */}
-                        <WalletMultiButton style={{ backgroundColor: '#4f46e5', borderRadius: '6px' }}/>
+                        {/* Texto slate-400 */}
+                        <p className="text-center text-slate-400 mb-4">Conecte sua carteira para começar.</p>
+                        {/* Botão da carteira com cor indigo-500 */}
+                        <WalletMultiButton style={{ backgroundColor: '#6366f1', borderRadius: '6px' }}/>
                      </>
                 ) : (
-                    <div className="text-center text-green-400 flex items-center">
+                    // Texto emerald-400 para conectado
+                    <div className="text-center text-emerald-400 flex items-center">
                         <Wallet className="w-5 h-5 mr-2"/> Conectado: {publicKey.toBase58().substring(0, 6)}...{publicKey.toBase58().substring(publicKey.toBase58().length - 4)}
                     </div>
                 )}
             </div>
 
-            {/* Input do Endereço e Botão de Verificação (mostrado apenas se a carteira estiver conectada) */}
+            {/* Input do Endereço e Botão de Verificação */}
             {publicKey && (
                 <div className="space-y-6">
                     <div>
-                        <label htmlFor="solana-address" className="block text-sm font-medium leading-6 text-gray-300 mb-2">
+                        {/* Label slate-300 */}
+                        <label htmlFor="solana-address" className="block text-sm font-medium leading-6 text-slate-300 mb-2">
                            Endereço Solana (Token ou Contrato)
                         </label>
                         <div className="relative">
@@ -177,22 +173,23 @@ const RugPullDetectionPage: React.FC = () => {
                               id="solana-address"
                               value={addressToCheck}
                               onChange={(e) => setAddressToCheck(e.target.value)}
-                              className="block w-full rounded-md border-0 bg-white/5 py-2.5 px-3 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6 placeholder:text-gray-500"
+                              // Estilos do input atualizados para slate
+                              className="block w-full rounded-md border-0 bg-slate-700/30 py-2.5 px-3 text-slate-100 shadow-sm ring-1 ring-inset ring-slate-600/50 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6 placeholder:text-slate-500"
                               placeholder="Insira o endereço..."
-                              disabled={isLoading} // Desabilita durante o carregamento
+                              disabled={isLoading}
                            />
                         </div>
                     </div>
 
                     <button
                         onClick={handleCheckAddress}
-                        disabled={isLoading || !publicKey || !addressToCheck.trim()} // Desabilita se carregando, sem carteira ou sem endereço
-                        className="w-full flex justify-center items-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isLoading || !publicKey || !addressToCheck.trim()}
+                        // Botão com indigo-500 e hover indigo-600
+                        className="w-full flex justify-center items-center rounded-md bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                      >
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {/* Mensagem dinâmica durante o carregamento */}
                                 {feePaid ? 'Analisando...' : 'Processando Taxa...'}
                             </>
                         ) : (
@@ -203,48 +200,50 @@ const RugPullDetectionPage: React.FC = () => {
             )}
 
             {/* Área de Resultados */}
-            {/* Exibe erro, se houver */}
             {error && (
-                <div className="mt-6 rounded-md bg-red-900/50 p-4 text-center text-red-300 border border-red-700">
+                // Erro com fundo red-950, texto red-400 e borda red-800
+                <div className="mt-6 rounded-md bg-red-950/50 p-4 text-center text-red-400 border border-red-800/50">
                     <AlertTriangle className="inline-block w-5 h-5 mr-2" /> {error}
                 </div>
             )}
 
-            {/* Mensagem durante o carregamento */}
             {isLoading && !result && (
-                 <div className="mt-6 text-center text-gray-400">
+                 // Texto de carregamento slate-400
+                 <div className="mt-6 text-center text-slate-400">
                     <p>{feePaid ? 'Executando análise de IA...' : 'Aguardando confirmação da taxa...'}</p>
                  </div>
             )}
 
-            {/* Exibe o resultado da análise */}
             {result && !isLoading && (
-              <div className="mt-8 p-6 bg-gray-700/30 rounded-lg border border-gray-600">
-                <h3 className="text-xl font-semibold text-white mb-4 text-center">Resultado da Análise</h3>
+              // Área de resultado com fundo slate-800/40 e borda slate-700
+              <div className="mt-8 p-6 bg-slate-800/40 rounded-lg border border-slate-700/50">
+                {/* Título slate-100 */}
+                <h3 className="text-xl font-semibold text-slate-100 mb-4 text-center">Resultado da Análise</h3>
                 <div className="text-center mb-4">
-                  {/* Pontuação de Risco */}
                   <span className={`text-5xl font-bold ${getRiskColor(result.riskScore)}`}>
                     {result.riskScore}
                   </span>
-                  <span className="text-gray-400"> / 100 Pontuação de Risco</span>
+                  {/* Texto secundário slate-400 */}
+                  <span className="text-slate-400"> / 100 Pontuação de Risco</span>
                 </div>
-                 {/* Indicação de Risco */}
-                 <div className={`text-center font-semibold mb-6 ${result.isRugPull ? 'text-red-400' : 'text-green-400'}`}>
+                 {/* Indicação de Risco com cores ajustadas */}
+                 <div className={`text-center font-semibold mb-6 ${result.isRugPull ? 'text-red-400' : 'text-emerald-400'}`}>
                     {result.isRugPull ? 'Alto Risco / Potencial Rug Pull Detectado' : 'Risco Baixo Detectado'}
                  </div>
-                {/* Avisos e Observações */}
                 {result.warnings.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-indigo-300 mb-2">Avisos e Observações:</h4>
-                    <ul className="list-disc list-inside space-y-1 text-gray-300">
+                    {/* Título dos avisos indigo-400 */}
+                    <h4 className="font-semibold text-indigo-400 mb-2">Avisos e Observações:</h4>
+                    {/* Texto dos avisos slate-300 */}
+                    <ul className="list-disc list-inside space-y-1 text-slate-300">
                       {result.warnings.map((warning, index) => (
                         <li key={index}>{warning}</li>
                       ))}
                     </ul>
                   </div>
                 )}
-                 {/* Aviso Legal */}
-                 <p className="text-xs text-gray-500 mt-6 text-center">Aviso: Esta é uma análise automatizada e não constitui aconselhamento financeiro. Faça sua própria pesquisa (DYOR).</p>
+                 {/* Aviso Legal slate-500 */}
+                 <p className="text-xs text-slate-500 mt-6 text-center">Aviso: Esta é uma análise automatizada e não constitui aconselhamento financeiro. Faça sua própria pesquisa (DYOR).</p>
               </div>
             )}
           </div>
