@@ -24,13 +24,14 @@ const Header: React.FC<HeaderProps> = ({ setPage, activePage }) => {
   const getLinkClass = (page: string) => {
     return `cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors ${
       activePage === page
-        ? 'bg-indigo-700 text-white' // Estilo ativo
-        : 'text-gray-300 hover:bg-gray-700 hover:text-white' // Estilo inativo/hover
+        ? 'bg-indigo-600 text-white' // Estilo ativo (indigo-600)
+        : 'text-slate-300 hover:bg-slate-700 hover:text-white' // Estilo inativo/hover (slate)
     }`;
   };
 
   return (
-    <nav className="bg-gray-900/80 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+    // Usa slate-900 para o fundo
+    <nav className="bg-slate-900/80 backdrop-blur-sm shadow-lg sticky top-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo e Nome da Aplicação */}
@@ -39,8 +40,10 @@ const Header: React.FC<HeaderProps> = ({ setPage, activePage }) => {
               onClick={() => setPage('home')} // Navega para 'home' ao clicar
               className="flex items-center space-x-2 cursor-pointer"
             >
-              <TrendingUp className="h-8 w-8 text-indigo-400" />
-              <span className="text-2xl font-bold text-white">ProphetFi</span>
+              {/* Ajusta a cor do ícone para indigo-500 */}
+              <TrendingUp className="h-8 w-8 text-indigo-500" />
+              {/* Usa slate-100 para o texto */}
+              <span className="text-2xl font-bold text-slate-100">ProphetFi</span>
             </span>
           </div>
           {/* Navegação Principal (visível em telas médias e maiores) */}
@@ -59,7 +62,8 @@ const Header: React.FC<HeaderProps> = ({ setPage, activePage }) => {
           </div>
           {/* Botão da Carteira */}
           <div className="flex items-center">
-             <WalletMultiButton style={{ height: '40px', backgroundColor: '#4f46e5', borderRadius: '6px' }}/>
+             {/* Atualiza a cor de fundo inline para corresponder a indigo-500 */}
+             <WalletMultiButton style={{ height: '40px', backgroundColor: '#6366f1', borderRadius: '6px' }}/>
             {/* Pode adicionar um botão "Launch App" aqui se necessário */}
           </div>
         </div>
