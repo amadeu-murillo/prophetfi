@@ -1,16 +1,16 @@
 "use client"; // Necessário para hooks do React (useMemo) e contexto
 
 import React, { FC, useMemo } from 'react';
+// Nota: O ambiente de visualização pode ter problemas para resolver estas importações.
+// Elas devem funcionar corretamente em um ambiente de desenvolvimento Next.js local.
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+// Removido import de clusterApiUrl pois usaremos um endpoint específico
 
 // Importação de CSS geralmente não é feita aqui no App Router,
-// mas sim no layout.tsx ou globals.css. Deixe comentado ou remova.
-// require('@solana/wallet-adapter-react-ui/styles.css');
-// Ou se os estilos não estiverem aplicando:
+// mas sim no layout.tsx ou globals.css.
 // import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface WalletContextProviderProps {
@@ -18,14 +18,13 @@ interface WalletContextProviderProps {
 }
 
 export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children }) => {
-    // A rede pode ser 'devnet', 'testnet', ou 'mainnet-beta'
+    // A rede continua Devnet, correspondendo ao endpoint Helius fornecido
     const network = WalletAdapterNetwork.Devnet;
 
-    // Endpoint RPC da rede Solana. useMemo evita recálculos desnecessários.
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    // Endpoint RPC: Usando o endpoint Helius Devnet fornecido pelo usuário
+    const endpoint = "https://devnet.helius-rpc.com/?api-key=2e9c5f4b-aacf-4903-a787-0c431a50ffff";
 
     // Configuração das carteiras suportadas.
-    // Apenas as carteiras configuradas aqui serão incluídas no bundle final.
     const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),
@@ -36,9 +35,9 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children
     );
 
     return (
-        // Provedor para a conexão com a rede Solana
+        // Provedor para a conexão com a rede Solana, agora usando o endpoint Helius
         <ConnectionProvider endpoint={endpoint}>
-            {/* Provedor para o estado da carteira (carteiras disponíveis, conexão) */}
+            {/* Provedor para o estado da carteira */}
             <WalletProvider wallets={wallets} autoConnect>
                 {/* Provedor para a UI Modal de seleção de carteira */}
                 <WalletModalProvider>

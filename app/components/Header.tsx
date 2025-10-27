@@ -1,8 +1,14 @@
 "use client"; // Necessário para componentes com interatividade como onClick
 
 import React from 'react';
+import dynamic from 'next/dynamic'; // Import dynamic for client-side only components
 import { TrendingUp } from 'lucide-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+// Import WalletMultiButton dynamically to prevent SSR hydration errors
+const WalletMultiButtonDynamic = dynamic(
+    async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+    { ssr: false }
+);
+
 
 // Tipos das propriedades esperadas pelo componente Header
 interface HeaderProps {
@@ -60,10 +66,10 @@ const Header: React.FC<HeaderProps> = ({ setPage, activePage }) => {
               ))}
             </div>
           </div>
-          {/* Botão da Carteira */}
+          {/* Botão da Carteira - Usando a versão dinâmica */}
           <div className="flex items-center">
              {/* Atualiza a cor de fundo inline para corresponder a indigo-500 */}
-             <WalletMultiButton style={{ height: '40px', backgroundColor: '#6366f1', borderRadius: '6px' }}/>
+             <WalletMultiButtonDynamic style={{ height: '40px', backgroundColor: '#6366f1', borderRadius: '6px' }}/>
             {/* Pode adicionar um botão "Launch App" aqui se necessário */}
           </div>
         </div>
