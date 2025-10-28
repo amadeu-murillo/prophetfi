@@ -6,12 +6,13 @@ import React, { FC, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+// Removido PhantomWalletAdapter - será tratado pelo Standard Wallet mechanism
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 // Removido import de clusterApiUrl pois usaremos um endpoint específico
 
 // Importação de CSS geralmente não é feita aqui no App Router,
 // mas sim no layout.tsx ou globals.css.
-// import '@solana/wallet-adapter-react-ui/styles.css';
+import '@solana/wallet-adapter-react-ui/styles.css'; // Garantir que os estilos sejam carregados
 
 interface WalletContextProviderProps {
     children: React.ReactNode;
@@ -25,9 +26,10 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children
     const endpoint = "https://devnet.helius-rpc.com/?api-key=2e9c5f4b-aacf-4903-a787-0c431a50ffff";
 
     // Configuração das carteiras suportadas.
+    // PhantomWalletAdapter removido da inicialização explícita.
     const wallets = useMemo(
         () => [
-            new PhantomWalletAdapter(),
+            // Phantom será detectado automaticamente como Standard Wallet
             new SolflareWalletAdapter({ network }),
             // Adicione outras carteiras aqui se necessário
         ],

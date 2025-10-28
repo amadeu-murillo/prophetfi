@@ -17,11 +17,13 @@ export async function fetchRugPullData(
     updateStep: (step: string) => void
 ): Promise<RugPullResult> {
     console.log(`Iniciando análise para o endereço: ${address}`);
+    updateStep("Inicializando análise..."); // Initial step
     const warnings: RugPullResult['warnings'] = [];
     let riskScore = 0;
     const details: RugPullResult['details'] = { links: {} }; // Initialize details with links object
     let assetData: any = null;
     let creatorAddress: string | null = null;
+    let isCreatorTopHolder = false; // Flag to indicate if creator is a top holder
 
     // Use AbortController for overall timeout
     const overallController = new AbortController();
@@ -31,6 +33,7 @@ export async function fetchRugPullData(
     }, ANALYSIS_TIMEOUT_MS);
 
     // Helper to add warnings and update risk score
+    // Comments added to explain score increases
     const addWarning = (level: WarningLevel, message: string, category: WarningCategory, scoreIncrease = 0) => {
         warnings.push({ level, message, category });
         riskScore += scoreIncrease;
@@ -44,6 +47,7 @@ export async function fetchRugPullData(
         details.asset = assetData;
 
         if (!assetData) {
+            // High impact if metadata isn't found
             addWarning('high', "Não foi possível encontrar metadados para este endereço. Pode não ser um token SPL válido ou conhecido pela Helius.", 'General', 50);
         } else {
             console.log("Metadados recebidos:", assetData);
@@ -65,9 +69,11 @@ export async function fetchRugPullData(
             }
              details.creatorAddress = creatorAddress;
              if (creatorAddress) {
+                 updateStep("Verificando criador..."); // More granular step
                  details.links.creatorSolscan = `${SOLSCAN_BASE_URL}/account/${creatorAddress}?cluster=devnet`;
                  details.links.creatorSolanaFM = `${SOLANAFM_BASE_URL}/address/${creatorAddress}?cluster=devnet-solana`;
              } else {
+                 // Medium risk if creator cannot be identified
                  addWarning('medium', "Não foi possível identificar o endereço do criador/autoridade de atualização.", 'Metadata', 5);
              }
 
@@ -78,15 +84,19 @@ export async function fetchRugPullData(
 
             // Content Checks (Name, Symbol, Links, URI)
             if (!assetData.content) {
+                // Higher risk if essential content metadata is missing
                 addWarning('medium', "Metadados de conteúdo (nome, símbolo, URI) não encontrados.", 'Metadata', 15);
             } else {
+                updateStep("Analisando conteúdo dos metadados..."); // More granular step
                 if (!assetData.content.metadata?.name || !assetData.content.metadata?.symbol) {
+                    // Medium risk for incomplete metadata
                     addWarning('medium', "Metadados incompletos (sem nome e/ou símbolo).", 'Metadata', 10);
                 } else {
                     addWarning('info', `Token: ${assetData.content.metadata.name} (${assetData.content.metadata.symbol})`, 'Metadata');
                 }
 
                  if (!assetData.content.links?.website && !assetData.content.links?.twitter && !assetData.content.links?.telegram && !assetData.content.links?.discord) {
+                    // Missing social links increases risk
                     addWarning('medium', "Faltam links sociais/website nos metadados.", 'Metadata', 15);
                 } else {
                     addWarning('low', "Links sociais/website presentes nos metadados.", 'Metadata');
@@ -96,13 +106,16 @@ export async function fetchRugPullData(
                      addWarning('info', `Metadados externos (JSON URI): ${assetData.content.json_uri.substring(0, 30)}...`, 'Metadata');
                      // Ideal: Fetch URI, validate, compare hash? Increases complexity.
                  } else if (assetData.interface !== "V1_NFT") { // URIs often missing for standard NFTs
-                      addWarning('low', "Não há URI de metadados externos (JSON URI).", 'Metadata', 5); // Slight risk increase if fungible
+                      // Slight risk increase if fungible and no external URI
+                      addWarning('low', "Não há URI de metadados externos (JSON URI).", 'Metadata', 5);
                  }
             }
 
             // Mint/Freeze Authority Checks (Only for Fungible)
-            if (assetData.interface === "FungibleToken" || assetData.interface === "FungibleAsset") {
+             if (assetData.interface === "FungibleToken" || assetData.interface === "FungibleAsset") {
+                 updateStep("Verificando autoridades de mint/freeze..."); // More granular step
                 if (assetData.mint_info?.mint_authority) {
+                     // Active mint authority is a major red flag
                      addWarning('high', "Autoridade de mint ainda ativa. O fornecimento pode ser aumentado arbitrariamente.", 'Metadata', 30);
                  } else if (assetData.mint_info?.supply !== undefined) { // Check if mint_info exists
                     addWarning('low', "Autoridade de mint revogada ou inexistente.", 'Metadata');
@@ -111,6 +124,7 @@ export async function fetchRugPullData(
                 }
 
                 if (assetData.mint_info?.freeze_authority) {
+                    // Active freeze authority allows blocking transfers
                     addWarning('medium', "Autoridade de congelamento ativa. As transferências podem ser bloqueadas.", 'Metadata', 15);
                 } else if (assetData.mint_info?.supply !== undefined) {
                     addWarning('low', "Autoridade de congelamento revogada ou inexistente.", 'Metadata');
@@ -121,6 +135,7 @@ export async function fetchRugPullData(
 
              // Mutability Check
             if (assetData.mutable) {
+                // Mutable metadata can be changed later, potential scam vector
                 addWarning('medium', "Metadados do token são mutáveis. Podem ser alterados após a criação (ex: links, nome).", 'Metadata', 10);
             } else if (assetData.content) { // Only add 'low' if content exists to check mutability against
                 addWarning('low', "Metadados do token são imutáveis.", 'Metadata');
@@ -149,12 +164,14 @@ export async function fetchRugPullData(
                  } catch (e) { console.error("Erro formatando supply:", e); }
 
                 if (totalSupplyBI === BigInt(0)) {
+                    // Zero supply is unusual
                     addWarning('medium', `Fornecimento total é zero.`, 'Holders', 5);
                 }
 
                 const largestAccountsResult = await fetchHeliusRpc('getTokenLargestAccounts', [address], apiKey);
 
                 if (largestAccountsResult?.value?.length > 0 && totalSupplyBI > 0) {
+                     updateStep("Analisando distribuição dos detentores..."); // More granular step
                      const topHoldersRaw = largestAccountsResult.value;
                      details.topHolders = topHoldersRaw.slice(0, 10).map((acc: any): TopHolder => { // Add return type annotation
                          let percentage = 0;
@@ -184,7 +201,7 @@ export async function fetchRugPullData(
                     addWarning('info', `Top 1 detentor possui ${top1Concentration.toFixed(2)}% do supply.`, 'Holders');
                     addWarning('info', `Top 10 detentores possuem ${top10Concentration.toFixed(2)}% do supply.`, 'Holders');
 
-                    // Score based on concentration
+                    // Score based on concentration - Higher concentration significantly increases risk
                     if (top1Concentration > 50) { addWarning('high', `Concentração extremamente alta no maior detentor (>50%). Risco elevado de dump.`, 'Holders', 35); }
                     else if (top1Concentration > 30) { addWarning('medium', `Concentração alta no maior detentor (>30%).`, 'Holders', 20); }
                     else if (top10Concentration > 80) { addWarning('high', `Concentração muito alta nos 10 maiores detentores (>80%).`, 'Holders', 25); }
@@ -194,16 +211,21 @@ export async function fetchRugPullData(
                      // Check if creator is a top holder
                      if (creatorAddress && details.topHolders && details.topHolders.some(h => h.address === creatorAddress)) {
                          const creatorHolding = details.topHolders.find(h => h.address === creatorAddress);
+                         // Medium risk if creator holds a significant portion
                          addWarning('medium', `O endereço do criador está entre os maiores detentores com ${creatorHolding?.percentage.toFixed(2)}%.`, 'Holders', 10);
+                         isCreatorTopHolder = true; // Set the flag
                      }
+                     details.isCreatorTopHolder = isCreatorTopHolder; // Add this info to details
 
                 } else if (largestAccountsResult) { // Result exists but value is empty or supply is 0
+                     // Slight risk if no holders found or supply is zero
                      addWarning('medium', "Não foram encontrados grandes detentores (ou supply é zero).", 'Holders', 5);
                 } else { // Error fetching accounts
                     addWarning('info', "Não foi possível verificar a distribuição dos detentores.", 'Holders');
                 }
 
             } else {
+                // Missing supply info is a moderate risk
                 addWarning('medium', "Informação de supply/decimals não encontrada nos metadados.", 'Holders', 10);
             }
         // Specific info messages for non-fungible/compressed
@@ -237,6 +259,7 @@ export async function fetchRugPullData(
                          if (signatures.length >= MAX_SIGNATURE_FETCH) {
                               addWarning('low', `Criador tem histórico de transações considerável (${signatures.length}+). Pode indicar atividade legítima.`, 'Creator');
                          } else if (signatures.length < 5) {
+                              // Very few transactions might indicate a new/disposable wallet
                               addWarning('medium', `Criador tem pouquíssimas transações recentes (${signatures.length}). Pode ser uma carteira nova/descartável.`, 'Creator', 10);
                          }
                     } else {
@@ -248,6 +271,7 @@ export async function fetchRugPullData(
                      // Analyze txDetails for patterns (multiple mints close together, initial LP add/remove, etc.)
 
                 } else {
+                    // No recent history for creator increases risk
                     addWarning('medium', "Nenhuma assinatura encontrada recentemente para o criador.", 'Creator', 10);
                 }
             } catch (creatorError: any) {
@@ -273,6 +297,7 @@ export async function fetchRugPullData(
                      addWarning('info', `Token teve ${signatures.length} assinaturas recentes na Helius.`, 'Activity');
 
                     if (signatures.length < 10) {
+                        // Very low recent activity might be suspicious
                         addWarning('medium', "Volume de transações recentes muito baixo.", 'Activity', 10);
                     }
 
@@ -281,6 +306,7 @@ export async function fetchRugPullData(
                     details.recentActivity.significantSalesCount = 0; // Placeholder
 
                 } else {
+                     // No recent activity increases risk
                      addWarning('medium', "Nenhuma atividade recente encontrada para o token.", 'Activity', 15);
                  }
              } catch (activityError: any) {
@@ -335,4 +361,3 @@ export async function fetchRugPullData(
         clearTimeout(overallTimeoutId); // Ensure timeout is cleared on success or error
     }
 }
-
